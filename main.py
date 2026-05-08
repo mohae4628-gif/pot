@@ -4,10 +4,11 @@ import asyncio
 import threading
 import sqlite3
 from datetime import datetime, timedelta
-from flask import Flask
+from flask import Flask, request, jsonify # تم تصحيح الاستدعاءات هنا
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
+# --- 1. الإعدادات والمعرفات ---
 TOKEN = os.getenv("TOKEN") or os.getenv("BOT_TOKEN")
 ADMIN_ID = 5332562107 
 
@@ -15,6 +16,7 @@ PRIVATE_CHANNEL_ID = '-1003953368081'
 FREE_CHANNEL_URL = 'https://t.me/c/3907521588/1' 
 REQUESTS_CHANNEL_ID = '-1003846832363' 
 ARCHIVE_CHANNEL_ID = '-1003989339996'  
+DATA_CHANNEL_ID = REQUESTS_CHANNEL_ID # توجيه بيانات سلة لنفس قناة الطلبات
 
 PORT = int(os.environ.get('PORT', 8080))
 
@@ -26,6 +28,7 @@ URLS = {
     "whatsapp_support": "https://wa.me/+966554852681" 
 }
 
+# --- 2. إدارة قاعدة البيانات ---
 def init_db():
     conn = sqlite3.connect('aziz_trading.db')
     c = conn.cursor()
@@ -42,9 +45,14 @@ def add_subscriber(user_id, name, expiry_date):
     conn.commit()
     conn.close()
 
+# --- 3. إعداد Flask وLogging ---
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 app_flask = Flask(__name__)
 
+# متغير عالمي لتخزين نسخة البوت لاستخدامها في الـ Webhook
+application_instance = None
+
+# --- 4. لوحة المفاتيح الرئيسية (نفس مصطلحاتك) ---
 def main_menu_keyboard():
     keyboard = [
         [InlineKeyboardButton("📊 اشتراك تحليلات SPX الخاصة  ", callback_data='menu_spx')],
@@ -55,6 +63,7 @@ def main_menu_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
+# --- 5. المهام التلقائية (تنبيه + طرد) ---
 async def daily_check_job(context: ContextTypes.DEFAULT_TYPE):
     conn = sqlite3.connect('aziz_trading.db')
     c = conn.cursor()
@@ -82,6 +91,7 @@ async def daily_check_job(context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     conn.close()
 
+# --- 6. الأوامر والمعالجات ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = (
         "🚀 مرحبًا بك في بوت AZIZ Trading\n\n"
@@ -150,17 +160,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=cust_id, text="❌ نعتذر، لم يتم تأكيد الدفع. يرجى التواصل مع الدعم الفني.")
         await query.edit_message_text(f"❌ تم الرفض للآيدي {cust_id}.")
 
-@app.route('/webhook', methods=['POST'])
+# --- 7. استقبال إشعارات سلة (Salla Webhook) ---
+@app_flask.route('/webhook', methods=['POST'])
 def salla_webhook():
     data = request.json
-    if data.get('event') in ['subscription.created', 'subscription.charged']:
+    if data and data.get('event') in ['subscription.created', 'subscription.charged', 'order.created']:
         customer = data['data'].get('customer', {})
         msg = f"💰 دفع جديد من سلة!\nالعميل: {customer.get('first_name')}\nالجوال: {customer.get('mobile')}"
-        if bot_instance:
+        
+        # إرسال الرسالة عبر البوت
+        if application_instance:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(bot_instance.send_message(chat_id=DATA_CHANNEL_ID, text=msg))
-            loop.run_until_complete(bot_instance.send_message(chat_id=ADMIN_ID, text=msg))
+            loop.run_until_complete(application_instance.bot.send_message(chat_id=ADMIN_ID, text=msg))
+            
     return jsonify({'status': 'success'}), 200
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -181,15 +194,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['waiting_for_proof'] = False
 
 @app_flask.route('/')
-def home(): return "Bot is Online"
+def home(): return "Bot AZIZ Trading is Online"
 
+# --- 8. تشغيل التطبيق ---
 def main():
+    global application_instance
     init_db()
+    
+    # تشغيل Flask في ثريد منفصل
     threading.Thread(target=lambda: app_flask.run(host='0.0.0.0', port=PORT), daemon=True).start()
     
     application = Application.builder().token(TOKEN).build()
+    application_instance = application # تخزين النسخة لاستخدامها في الـ Webhook
     
-
+    # تفعيل نظام الجدولة إذا كان مثبتاً
     if application.job_queue:
         application.job_queue.run_repeating(daily_check_job, interval=3600, first=10)
     
@@ -197,6 +215,7 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.PHOTO | filters.TEXT & ~filters.COMMAND, handle_message))
     
+    print("🚀 البوت يعمل الآن بكامل المميزات...")
     application.run_polling()
 
 if __name__ == '__main__':
