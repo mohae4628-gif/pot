@@ -56,7 +56,7 @@ application_instance = None
 def main_menu_keyboard():
     keyboard = [
         [InlineKeyboardButton("📊 اشتراك تحليلات SPX الخاصة  ", callback_data='menu_spx')],
-        [InlineKeyboardButton("📈 اشتراك المؤشرات الفنية الخاصة ", callback_data='menu_indicators')],
+        [InlineKeyboardButton("📈     Aziz pro مؤشر      ", url=URLS["ind_1m"])],
         [InlineKeyboardButton("🆓      القناة المجانية        ", url=FREE_CHANNEL_URL)],
         [InlineKeyboardButton("✅     أرسل إثبات الدفع      ", callback_data='upload_proof')],
         [InlineKeyboardButton("💬       الدعم الفني        ", url=URLS["whatsapp_support"])]
@@ -120,7 +120,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == 'menu_indicators':
         keyboard = [
-            [InlineKeyboardButton(" Aziz pro مؤشر ", url=URLS["ind_1m"])],
+            [InlineKeyboardButton("📈 Aziz pro مؤشر ", url=URLS["ind_1m"])],
             [InlineKeyboardButton("✅ أرسل إثبات الدفع", callback_data='upload_proof')],
             [InlineKeyboardButton("🔙 العودة", callback_data='back_to_main')]
         ]
