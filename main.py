@@ -22,6 +22,7 @@ PORT = int(os.environ.get('PORT', 8080))
 
 URLS = {
     "spx_1m": "https://salla.sa/AZIZSPX/WzbWgKA",
+    "spx_shop": "https://salla.sa/AZIZSPX",
     "spx_3m": "https://salla.sa/AZIZSPX/xvnbrQb",
     "spx_6m": "https://salla.sa/AZIZSPX/azdOBBK",
     "ind_1m": "https://salla.sa/AZIZSPX/EXKwOwZ",
@@ -55,7 +56,7 @@ application_instance = None
 # --- 4. لوحة المفاتيح الرئيسية (نفس مصطلحاتك) ---
 def main_menu_keyboard():
     keyboard = [
-        [InlineKeyboardButton("📊 اشتراك تحليلات SPX الخاصة  ", callback_data='menu_spx')],
+        [InlineKeyboardButton("📊 اشتراك تحليلات SPX الخاصة  ", url=URLS["spx_shop"])],
         [InlineKeyboardButton("📈     Aziz pro مؤشر      ", url=URLS["ind_1m"])],
         [InlineKeyboardButton("🆓      القناة المجانية        ", url=FREE_CHANNEL_URL)],
         [InlineKeyboardButton("✅     أرسل إثبات الدفع      ", callback_data='upload_proof')],
