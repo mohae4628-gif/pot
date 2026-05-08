@@ -101,9 +101,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == 'menu_spx':
         keyboard = [
-            [InlineKeyboardButton("شهر - 100 ريال", url=URLS["spx_1m"])],
-            [InlineKeyboardButton("3 شهور - 279 ريال", url=URLS["spx_3m"])],
-            [InlineKeyboardButton("6 شهور - 549 ريال", url=URLS["spx_6m"])],
+            [InlineKeyboardButton("شهر - 169 ريال", url=URLS["spx_1m"])],
+            [InlineKeyboardButton("3 شهور - 399 ريال", url=URLS["spx_3m"])],
             [InlineKeyboardButton("✅ أرسل إثبات الدفع", callback_data='upload_proof')],
             [InlineKeyboardButton("🔙 العودة", callback_data='back_to_main')]
         ]
@@ -111,7 +110,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == 'menu_indicators':
         keyboard = [
-            [InlineKeyboardButton("Aziz pro مؤشر - 399 ريال", url=URLS["ind_1m"])],
+            [InlineKeyboardButton(" Aziz pro مؤشر ", url=URLS["ind_1m"])],
             [InlineKeyboardButton("✅ أرسل إثبات الدفع", callback_data='upload_proof')],
             [InlineKeyboardButton("🔙 العودة", callback_data='back_to_main')]
         ]
